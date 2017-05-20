@@ -20,8 +20,8 @@ set.seed(2102)
 north <- c(51000, 54000, 6500, 14000) # roughly Northern Germany
 south <- c(47500, 51000, 6500, 14000) # roughly Southern Germany
 
-visited_north <- gen_points(north, 5000, 50, 1)
-visited_south <- gen_points(south, 5000, 50, 51)
+visited_north <- gen_points(north, 1000, 200, 1)
+visited_south <- gen_points(south, 1000, 200, 201)
 
 visited_points <- rbind(visited_north, visited_south)
 write.csv(visited_points, "dummy_geo_data.csv", row.names = F)
