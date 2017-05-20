@@ -24,6 +24,6 @@ visited_north <- gen_points(north, 5000, 50, 1)
 visited_south <- gen_points(south, 5000, 50, 51)
 
 visited_points <- rbind(visited_north, visited_south)
-write.csv(visited_points, "dummy_geo_data.csv")
+write.csv(visited_points, "dummy_geo_data.csv", row.names = F)
 
 
