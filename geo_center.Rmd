@@ -1,0 +1,101 @@
+---
+title: "Geographic Center"
+output: html_notebook
+---
+
+This notebook shows one method to calculate the center of gravity between a number of points. I have created some dummy data with a separate script.
+
+```{r, echo=TRUE}
+# read in the dummy data
+library(tidyverse)
+library(ggmap)
+library(geosphere)
+vp <- read.csv("dummy_geo_data.csv")
+
+
+vp
+```
+
+
+The method to calculate the median distance between center and the points uses the Vincente method assuming the earth is a spheroid:
+
+```{r}
+calc_median <- function(center, places){
+  distances <- numeric()
+  for (i in 1:nrow(places)){
+    distances <- c(distances, distVincentySphere(center, c(places$lon[i],places$lat[i])))  
+  }
+  
+  return(round(median(distances)/1000,2))
+}
+```
+
+Next, I define a function to calculate the center of gravity between various points. The lat / lon coordinates are transposed to carthesian three-dimensional coordinates; then their respective average is calculated; finally, these values are transposed back to lat / lon degrees:
+
+```{r}
+calc_center <- function(places){
+  # Convert Lat / Lon from degree to radians
+  places$latr <- places$lat * pi / 180
+  places$lonr <- places$lon * pi / 180
+  
+  # Convert latr / lonr to Cartesian coordinates for fall locations.
+  places$x = cos(places$latr) * cos(places$lonr)
+  places$y = cos(places$latr) * sin(places$lonr)
+  places$z = sin(places$latr)
+  
+  # Compute averages for x, y, z coordinates
+  x = mean(places$x)
+  y = mean(places$y)
+  z = mean(places$z)
+  
+  # Convert average cartesian coordinate back to lat / lon
+  Lon = atan2(y, x)
+  Hyp = sqrt(x * x + y * y)
+  Lat = atan2(z, Hyp)
+  
+  # Convert Lat / Lon to degrees.
+  Lat = Lat * 180 / pi
+  Lon = Lon * 180 / pi 
+  
+  # calculate the median distance from the centroid to the points
+  center <- c(Lon, Lat) # SIC! order is reversed!
+  median_dist <- calc_median(center, places)
+  
+  return(c(Lat, Lon, median_dist))
+}
+```
+
+
+
+Then I calculate the center and median distance for each agent in the dummy data set:
+
+
+
+
+```{r}
+centers <- data.frame(agent_id=numeric(), lat=numeric(), lon=numeric(), median_dist=numeric())
+
+for (i in unique(vp$agent_id)){
+  centers = rbind(centers,c(i,calc_center(filter(vp, agent_id==i))))
+}
+
+colnames(centers) <- c("agent_id", "lat", "lon", "median_dist")
+
+centers
+```
+
+
+Finally, these dat can be visualized using ggmap:
+
+
+```{r}
+loc <- "Germany"
+map <- qmap(loc, zoom =6)
+
+g <- map + 
+  geom_point(aes(x = lon, y = lat, colour = median_dist), size = 2, alpha= 0.5, data = centers)
+```
+
+
+
+
